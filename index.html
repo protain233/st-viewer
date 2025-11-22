@@ -62,6 +62,19 @@
             border-radius: 8px; display: none; flex-direction: column;
             z-index: 200; padding: 10px;
         }
+
+        #theme-select {
+            background: #111; 
+            color: #e1e1e1; 
+            border: 1px solid #444;
+            padding: 8px; 
+            border-radius: 5px; 
+            margin-bottom: 10px;
+            width: 100%; 
+            font-size: 14px; 
+            cursor: pointer;
+        }
+
         #css-editor {
             flex: 1; background: #111; color: #00ff00;
             font-family: monospace; border: 1px solid #333;
@@ -147,6 +160,15 @@
         <div class="panel-header">
             <span>自定义 CSS (实时生效 + 自动保存)</span> <span style="cursor:pointer" onclick="toggleCssPanel()">✖</span>
         </div>
+        
+        <select id="theme-select">
+            <option value="" disabled selected> css预设主题...</option>
+            <option value="default">(Default)</option>
+            <option value="novel">米色</option>
+            <option value="night">暗黑</option>
+            <option value="clear">(还原)</option>
+        </select>
+
         <textarea id="css-editor" placeholder="CSS 代码..."></textarea>
     </div>
 
@@ -294,6 +316,42 @@
 
         const cssEditor = document.getElementById('css-editor');
         const customStyleTag = document.getElementById('custom-user-css');
+
+        const themeSelect = document.getElementById('theme-select');
+
+        const PRESET_THEMES = {
+            "default": "/* 默认暗黑模式：清空即可 */",
+            
+            "novel": `/* === 米色 === */
+            body, #chat-container { background-color: #f2f1e4 !important; background-image: none !important; color: #2c3e50 !important; }
+            .avatar, .char-name { display: none !important; }
+            .bubble { background-color: transparent !important; border: none !important; box-shadow: none !important; padding: 0 !important; margin-bottom: 20px !important; font-size: 18px !important; line-height: 2.0 !important; color: #2c3e50 !important; font-family: "Segoe UI", sans-serif; }
+            .message-row, .message-user { flex-direction: row !important; justify-content: flex-start !important; }
+            .bubble-content { max-width: 100% !important; }
+            .bubble strong, .bubble b { color: #000000 !important; font-weight: 900 !important; }
+            .bubble h1, .bubble h2, .bubble h3 { color: #000000 !important; border-bottom: 1px solid #ccc; }`,
+
+            "night": `/* === 暗黑 === */
+            body, #chat-container { background-color: #111111 !important; background-image: none !important; color: #b0b0b0 !important; }
+            #toolbar, #pagination-bar { background-color: #1a1a1a !important; border-color: #333 !important; }
+            .avatar, .char-name { display: none !important; }
+            .bubble { background-color: transparent !important; border: none !important; padding: 0 !important; margin-bottom: 20px !important; font-size: 18px !important; line-height: 2.0 !important; color: #888888 !important; font-family: "Segoe UI", sans-serif; }
+            .message-row, .message-user { flex-direction: row !important; justify-content: flex-start !important; }
+            .bubble-content { max-width: 100% !important; }
+            .bubble strong, .bubble b { color: #d4d4d4 !important; }
+            span[style*="color: #6a8caf"] { color: #7d9ac2 !important; text-shadow: 0 0 1px rgba(125, 154, 194, 0.2); }`
+        };
+
+        themeSelect.addEventListener('change', function() {
+            const selected = this.value;
+        
+            if (selected === 'clear') {
+                cssEditor.value = "";
+            } else if (PRESET_THEMES[selected]) {
+                cssEditor.value = PRESET_THEMES[selected];
+            }
+            cssEditor.dispatchEvent(new Event('input'));
+        });
         
         function toggleCssPanel() {
             cssPanel.style.display = cssPanel.style.display === 'flex' ? 'none' : 'flex';
