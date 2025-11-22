@@ -6,7 +6,7 @@
     <title>SillyTavern 阅读器</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
-
+        
         body {
             background-color: #0b0d12;
             color: #e1e1e1;
@@ -54,9 +54,10 @@
 
         #page-info { color: #999; font-size: 14px; min-width: 80px; text-align: center; }
 
+        /* CSS面板 */
         #css-panel {
             position: absolute; top: 60px; right: 20px;
-            width: 350px; height: 400px;
+            width: 350px; height: 450px;
             background: #1f232c; border: 1px solid #444;
             box-shadow: 0 5px 15px rgba(0,0,0,0.5);
             border-radius: 8px; display: none; flex-direction: column;
@@ -91,6 +92,7 @@
             background-size: cover; background-attachment: fixed;
         }
 
+        /*消息样式*/ 
         .message-row {
             display: flex; margin-bottom: 25px; max-width: 1000px;
             margin-left: auto; margin-right: auto; animation: fadeIn 0.3s ease;
@@ -158,18 +160,18 @@
 
     <div id="css-panel">
         <div class="panel-header">
-            <span>自定义 CSS (实时生效 + 自动保存)</span> <span style="cursor:pointer" onclick="toggleCssPanel()">✖</span>
+            <span>自定义 CSS (自动保存)</span> <span style="cursor:pointer" onclick="toggleCssPanel()">✖</span>
         </div>
         
         <select id="theme-select">
-            <option value="" disabled selected> css预设主题...</option>
-            <option value="default">(Default)</option>
-            <option value="novel">米色</option>
+            <option value="" disabled selected>选择主题</option>
+            <option value="default">自定义 (Default)</option>
+            <option value="novel">米色 </option>
             <option value="night">暗黑</option>
             <option value="clear">(还原)</option>
         </select>
 
-        <textarea id="css-editor" placeholder="CSS 代码..."></textarea>
+        <textarea id="css-editor" placeholder="在这里输入你的 CSS 代码..."></textarea>
     </div>
 
     <div id="chat-container">
@@ -179,7 +181,7 @@
     </div>
 
     <script>
-
+        // 全局变量
         let allMessages = [];   
         let isPageMode = false; 
         let currentPage = 1;    
@@ -192,7 +194,13 @@
         const pageInfoSpan = document.getElementById('page-info');
         const toolbar = document.getElementById('toolbar');
         const cssPanel = document.getElementById('css-panel');
+        
+        // 样式相关
+        const cssEditor = document.getElementById('css-editor');
+        const customStyleTag = document.getElementById('custom-user-css');
+        const themeSelect = document.getElementById('theme-select');
 
+        // 文件读取与渲染逻辑 
         fileInput.addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (!file) return;
@@ -244,7 +252,7 @@
 
             if (!isPageMode) {
                 setTimeout(() => {
-                    chatContainer.scrollTop = 0;
+                    chatContainer.scrollTop = 0; // 导入后回顶部
                 }, 50);
             }
             
@@ -252,9 +260,9 @@
             paginationBar.classList.remove('pagination-hidden');
         }
 
+        // 模式切换与翻页
         function toggleMode() {
             isPageMode = !isPageMode;
-            
             if (isPageMode) {
                 modeBtn.textContent = "╰(￣ω￣) 切换到滑动";
                 modeBtn.classList.add('active');
@@ -271,13 +279,13 @@
         function changePage(delta) {
             const totalPages = Math.ceil(allMessages.length / pageSize);
             const newPage = currentPage + delta;
-
             if (newPage >= 1 && newPage <= totalPages) {
                 currentPage = newPage;
                 renderCurrentView();
             }
         }
 
+        // 气泡生成逻辑 
         function createMessageBubble(data) {
             const name = data.name || 'Unknown';
             let text = data.mes || ''; 
@@ -314,15 +322,11 @@
             chatContainer.appendChild(rowDiv);
         }
 
-        const cssEditor = document.getElementById('css-editor');
-        const customStyleTag = document.getElementById('custom-user-css');
-
-        const themeSelect = document.getElementById('theme-select');
-
+        // CSS主题与保存逻辑
+        
+        // 定义预设主题
         const PRESET_THEMES = {
-            "default": "/* 默认暗黑模式：清空即可 */",
-            
-            "novel": `/* === 米色 === */
+            "novel": `/* 米色 */
             body, #chat-container { background-color: #f2f1e4 !important; background-image: none !important; color: #2c3e50 !important; }
             .avatar, .char-name { display: none !important; }
             .bubble { background-color: transparent !important; border: none !important; box-shadow: none !important; padding: 0 !important; margin-bottom: 20px !important; font-size: 18px !important; line-height: 2.0 !important; color: #2c3e50 !important; font-family: "Segoe UI", sans-serif; }
@@ -331,7 +335,7 @@
             .bubble strong, .bubble b { color: #000000 !important; font-weight: 900 !important; }
             .bubble h1, .bubble h2, .bubble h3 { color: #000000 !important; border-bottom: 1px solid #ccc; }`,
 
-            "night": `/* === 暗黑 === */
+            "night": `/* 暗黑 */
             body, #chat-container { background-color: #111111 !important; background-image: none !important; color: #b0b0b0 !important; }
             #toolbar, #pagination-bar { background-color: #1a1a1a !important; border-color: #333 !important; }
             .avatar, .char-name { display: none !important; }
@@ -342,49 +346,68 @@
             span[style*="color: #6a8caf"] { color: #7d9ac2 !important; text-shadow: 0 0 1px rgba(125, 154, 194, 0.2); }`
         };
 
+        // 读取用户输入
+        let userDraftCss = localStorage.getItem('st_reader_user_draft') || "";
+
+        function toggleCssPanel() {
+            cssPanel.style.display = cssPanel.style.display === 'flex' ? 'none' : 'flex';
+        }
+
         themeSelect.addEventListener('change', function() {
             const selected = this.value;
         
-            if (selected === 'clear') {
+            if (selected === 'default') {
+                cssEditor.value = userDraftCss;
+            } else if (selected === 'clear') {
                 cssEditor.value = "";
             } else if (PRESET_THEMES[selected]) {
                 cssEditor.value = PRESET_THEMES[selected];
             }
             cssEditor.dispatchEvent(new Event('input'));
         });
-        
-        function toggleCssPanel() {
-            cssPanel.style.display = cssPanel.style.display === 'flex' ? 'none' : 'flex';
-        }
+
         cssEditor.addEventListener('input', function() {
-            localStorage.setItem('st_reader_custom_css', this.value);
-            customStyleTag.textContent = this.value;
-        });
-        window.addEventListener('load', function() {
-            const saved = localStorage.getItem('st_reader_custom_css');
-            if(saved) { cssEditor.value = saved; customStyleTag.textContent = saved; }
+            const currentCode = this.value;
+            
+            localStorage.setItem('st_reader_custom_css', currentCode);
+            customStyleTag.textContent = currentCode;
+
+            if (themeSelect.value === 'default') {
+                userDraftCss = currentCode;
+                localStorage.setItem('st_reader_user_draft', currentCode);
+            }
         });
 
+        window.addEventListener('load', function() {
+
+            const saved = localStorage.getItem('st_reader_custom_css');
+            if(saved) { 
+                cssEditor.value = saved; 
+                customStyleTag.textContent = saved; 
+            }
+
+            themeSelect.value = "default";
+            
+            if (saved) {
+               userDraftCss = saved;
+            }
+        });
+
+        // 滚动自动隐藏工具栏
         let lastScrollTop = 0; 
         
         chatContainer.addEventListener('scroll', function() {
             const scrollTop = chatContainer.scrollTop;
-            
             if (scrollTop < 0) return;
 
             if (scrollTop > lastScrollTop && scrollTop > 50) {
-
                 toolbar.classList.add('toolbar-hidden');
-
                 paginationBar.classList.add('pagination-hidden');
-                
                 if(cssPanel.style.display === 'flex') toggleCssPanel();
             } else if (scrollTop < lastScrollTop) {
-
                 toolbar.classList.remove('toolbar-hidden');
                 paginationBar.classList.remove('pagination-hidden');
             }
-            
             lastScrollTop = scrollTop;
         });
     </script>
