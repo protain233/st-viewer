@@ -1,0 +1,40 @@
+body, #chat-container {
+    background-color: #111111 !important; 
+    background-image: none !important;
+    color: #b0b0b0 !important;
+}
+
+.avatar, .char-name {
+    display: none !important;
+}
+
+.bubble {
+    background-color: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    
+    margin-bottom: 20px !important;
+    font-size: 17px !important;
+    line-height: 2.0 !important;
+    
+    color: #888888 !important;            
+    font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
+}
+
+.message-row, .message-user {
+    flex-direction: row !important;
+    justify-content: flex-start !important;
+}
+.bubble-content {
+    max-width: 100% !important;
+}
+
+.bubble strong, .bubble b {
+    color: #d4d4d4 !important; 
+    font-weight: bold !important;
+}
+
+.bubble h1, .bubble h2, .bubble h3 {
+    color: #d4d4d4
+}
