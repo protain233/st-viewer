@@ -181,6 +181,7 @@
         white-space: pre-wrap !important; 
         font-family: inherit !important;
         }
+
     </style>
     
     <style id="custom-user-css"></style>
@@ -403,6 +404,8 @@
             let text = data.mes || ''; 
             const isUser = data.is_user === true;
             const initial = name.charAt(0).toUpperCase();
+
+            text = text.replace(/<thinking>[\s\S]*?<\/thinking>/gi, '');    //隐藏思维链
 
             const htmlTags = [];
             text = text.replace(/<[^>]+>/g, function(match) {
