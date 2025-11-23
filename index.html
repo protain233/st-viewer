@@ -224,7 +224,7 @@
 
     <div id="chat-container">
         <div style="text-align: center; color: #555; margin-top: 50px;">
-            点击右上角“导入文件”加载聊天记录
+            点击“导入文件”加载聊天记录
         </div>
     </div>
 
@@ -233,7 +233,8 @@
         let allMessages = [];   
         let isPageMode = false; 
         let currentPage = 1;    
-        const pageSize = 10;    
+        const pageSize = 10;
+        let currentFileKey = null;
 
         const fileInput = document.getElementById('fileInput');
         const chatContainer = document.getElementById('chat-container');
@@ -243,15 +244,16 @@
         const toolbar = document.getElementById('toolbar');
         const cssPanel = document.getElementById('css-panel');
         
-        // 样式相关
         const cssEditor = document.getElementById('css-editor');
         const customStyleTag = document.getElementById('custom-user-css');
         const themeSelect = document.getElementById('theme-select');
 
-        // 文件读取与渲染逻辑 
         fileInput.addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (!file) return;
+
+            currentFileKey = "st_progress_" + file.name + "_" + file.size;
+
             const reader = new FileReader();
             reader.onload = (e) => parseChat(e.target.result);
             reader.readAsText(file);
@@ -269,8 +271,74 @@
                     }
                 } catch (err) {}
             });
+            
+            loadProgress();
+        }
+
+        function loadProgress() {
+            if (!currentFileKey) {
+
+                currentPage = 1;
+                renderCurrentView();
+                return;
+            }
+
+            const savedData = localStorage.getItem(currentFileKey);
+            
+            if (savedData) {
+                try {
+                    const progress = JSON.parse(savedData);
+                    isPageMode = progress.mode;
+                    currentPage = progress.page || 1;
+                    
+                    updateModeButtonUI();
+                    
+                    renderCurrentView();
+
+                    if (!isPageMode && progress.scrollTop > 0) {
+                        setTimeout(() => {
+                            chatContainer.scrollTop = progress.scrollTop;
+                        }, 50);
+                    } else if (!isPageMode) {
+                        
+                         setTimeout(() => { chatContainer.scrollTop = 0; }, 50);
+                    }
+
+                    console.log("已恢复上次阅读进度");
+                    return;
+
+                } catch (e) {
+                    console.error("读取存档失败", e);
+                }
+            }
+
             currentPage = 1;
             renderCurrentView();
+            if(!isPageMode) setTimeout(() => { chatContainer.scrollTop = 0; }, 50);
+        }
+
+        function saveProgress() {
+            if (!currentFileKey) return;
+
+            const progress = {
+                mode: isPageMode,
+                page: currentPage,
+                scrollTop: chatContainer.scrollTop
+            };
+
+            localStorage.setItem(currentFileKey, JSON.stringify(progress));
+        }
+
+        function updateModeButtonUI() {
+            if (isPageMode) {
+                modeBtn.textContent = "╰(￣ω￣) 切换到滑动";
+                modeBtn.classList.add('active');
+                paginationBar.style.display = 'flex'; 
+            } else {
+                modeBtn.textContent = "~(￣▽￣)~ 切换到翻页";
+                modeBtn.classList.remove('active');
+                paginationBar.style.display = 'none'; 
+            }
         }
 
         function renderCurrentView() {
@@ -308,20 +376,15 @@
             paginationBar.classList.remove('pagination-hidden');
         }
 
-        // 模式切换与翻页
+        // 模式切换
         function toggleMode() {
             isPageMode = !isPageMode;
-            if (isPageMode) {
-                modeBtn.textContent = "╰(￣ω￣) 切换到滑动";
-                modeBtn.classList.add('active');
-                paginationBar.style.display = 'flex'; 
-                currentPage = 1; 
-            } else {
-                modeBtn.textContent = "~(￣▽￣)~ 切换到翻页";
-                modeBtn.classList.remove('active');
-                paginationBar.style.display = 'none'; 
-            }
+            updateModeButtonUI();
+            
+            if(isPageMode) currentPage = 1; 
+
             renderCurrentView();
+            saveProgress();
         }
 
         function changePage(delta) {
@@ -330,6 +393,7 @@
             if (newPage >= 1 && newPage <= totalPages) {
                 currentPage = newPage;
                 renderCurrentView();
+                saveProgress();
             }
         }
 
@@ -371,7 +435,6 @@
         }
 
         // CSS主题与保存逻辑
-        
         // 定义预设主题
         const PRESET_THEMES = {
             "novel": `/* 米色 */
@@ -441,11 +504,13 @@
             }
         });
 
-        // 滚动自动隐藏工具栏
         let lastScrollTop = 0; 
         
         chatContainer.addEventListener('scroll', function() {
             const scrollTop = chatContainer.scrollTop;
+            
+            if (currentFileKey) saveProgress();
+            
             if (scrollTop < 0) return;
 
             if (scrollTop > lastScrollTop && scrollTop > 50) {
