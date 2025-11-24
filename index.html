@@ -52,7 +52,37 @@
 
         .pagination-hidden { transform: translateY(100%); }
 
-        #page-info { color: #999; font-size: 14px; min-width: 80px; text-align: center; }
+        /*新增页码修改*/
+        #page-info { 
+            color: #ccc; 
+            font-size: 14px; 
+            min-width: 80px; 
+            text-align: center; 
+            
+            cursor: pointer; 
+            user-select: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+        #page-info:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+
+        .page-jump-input {
+            width: 40px; 
+            background: #111; 
+            border: 1px solid #6a8caf; 
+            color: #fff;
+            text-align: center; 
+            border-radius: 4px; 
+            font-size: 14px;
+            outline: none;
+        }
+        
+        .page-jump-input::-webkit-outer-spin-button,
+        .page-jump-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 
         /* CSS面板 */
         #css-panel {
@@ -505,6 +535,52 @@
             if (saved) {
                userDraftCss = saved;
             }
+        });
+
+
+        // 新增：点击页码变成输入框跳转
+        pageInfoSpan.addEventListener('click', function() {
+
+            if (this.querySelector('input')) return;
+
+            const totalPages = Math.ceil(allMessages.length / pageSize);
+
+            this.innerHTML = `第 <input type="number" class="page-jump-input" value="${currentPage}" min="1" max="${totalPages}"> / ${totalPages} 页`;
+
+            const input = this.querySelector('input');
+            
+            input.focus();
+            input.select();
+
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    const val = parseInt(this.value);
+                    
+                    if (!isNaN(val) && val >= 1 && val <= totalPages) {
+                        currentPage = val;
+                        renderCurrentView();
+                        saveProgress();
+                    } else {
+
+                        renderCurrentView(); 
+                    }
+                }
+
+                e.stopPropagation();
+            });
+
+
+            input.addEventListener('blur', function() {
+
+                setTimeout(() => {
+
+                    if (pageInfoSpan.querySelector('input')) {
+                        renderCurrentView(); 
+                    }
+                }, 100);
+            });
+            
+            input.addEventListener('click', (e) => e.stopPropagation());
         });
 
         let lastScrollTop = 0; 
