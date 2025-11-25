@@ -52,13 +52,14 @@
 
         .pagination-hidden { transform: translateY(100%); }
 
-        /*新增页码修改*/
+        /* 修改：页码指示器样式 */
         #page-info { 
             color: #ccc; 
             font-size: 14px; 
             min-width: 80px; 
             text-align: center; 
             
+            /* 新增：让鼠标放上去提示可点击 */
             cursor: pointer; 
             user-select: none;
             padding: 5px 10px;
@@ -66,10 +67,11 @@
             transition: background 0.2s;
         }
         #page-info:hover {
-            background-color: rgba(255, 255, 255, 0.1);
+            background-color: rgba(255, 255, 255, 0.1); /* 悬停高亮 */
             color: #fff;
         }
 
+        /* 新增：临时输入框的样式 */
         .page-jump-input {
             width: 40px; 
             background: #111; 
@@ -84,15 +86,17 @@
         .page-jump-input::-webkit-outer-spin-button,
         .page-jump-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 
-        /* CSS面板 */
-        #css-panel {
+        .panel {
             position: absolute; top: 60px; right: 20px;
             width: 350px; height: 450px;
             background: #1f232c; border: 1px solid #444;
             box-shadow: 0 5px 15px rgba(0,0,0,0.5);
-            border-radius: 8px; display: none; flex-direction: column;
+            border-radius: 8px; display: none; flex-direction: column; 
+            display: none; flex-direction: column;  /* 新增其他保持不变 */
             z-index: 200; padding: 10px;
         }
+
+        #regex-panel { right: 80px; }
 
         #theme-select {
             background: #111; 
@@ -111,7 +115,14 @@
             font-family: monospace; border: 1px solid #333;
             padding: 10px; resize: none; outline: none;
         }
+        
         .panel-header { display: flex; justify-content: space-between; margin-bottom: 8px; color: #ccc; font-size: 14px;}
+
+        /*通用文本框样式 */
+        .panel-textarea {
+        flex: 1; background: #111; color: #00ff00;
+        /* ... */
+        }
 
         #chat-container {
             flex: 1; overflow-y: auto; 
@@ -212,6 +223,45 @@
         font-family: inherit !important;
         }
 
+        /* 脚本列表项样式 */
+        .script-item {
+            display: flex;
+            align-items: center;
+            background: #1f232c;
+            border: 1px solid #333;
+            padding: 5px;
+            border-radius: 4px;
+            margin-bottom: 4px;
+            font-size: 13px;
+        }
+        .script-item:hover {
+            background: #2b303b;
+        }
+        .script-item input[type="checkbox"] {
+            margin-right: 8px;
+            cursor: pointer;
+        }
+        .script-name {
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            cursor: pointer;
+        }
+        .script-name:hover {
+            color: #fff;
+            text-decoration: underline;
+        }
+        .btn-del {
+            background: transparent;
+            border: none;
+            color: #666;
+            cursor: pointer;
+            font-size: 12px;
+            padding: 0 5px;
+        }
+        .btn-del:hover { color: #ff4444; }
+
     </style>
     
     <style id="custom-user-css"></style>
@@ -222,13 +272,15 @@
         <h2>ST Viewer [by蛋白233]</h2>
         
         <label class="btn">
-            📁 导入文件(.jsonl)
+            📁导入文件(.jsonl)
             <input type="file" id="fileInput" accept=".jsonl,.txt,.json">
         </label>
 
         <button class="btn" id="mode-btn" onclick="toggleMode()">(￣▽￣)切换到翻页</button>
 
-        <button class="btn" onclick="toggleCssPanel()">🎨 CSS样式</button>
+        <button class="btn" onclick="togglePanel('regex-panel')">📃正则脚本</button>
+
+        <button class="btn" onclick="togglePanel('css-panel')">🎨CSS样式</button>
     </div>
 
     <div id="pagination-bar">
@@ -237,20 +289,53 @@
         <button class="btn" onclick="changePage(1)">下一页 ➡</button>
     </div>
 
-    <div id="css-panel">
+    <div id="css-panel" class="panel">
         <div class="panel-header">
-            <span>自定义 CSS (自动保存)</span> <span style="cursor:pointer" onclick="toggleCssPanel()">✖</span>
+            <span>自定义 CSS (自动保存)</span> 
+            <span style="cursor:pointer" onclick="togglePanel('css-panel')">✖</span>
         </div>
         
         <select id="theme-select">
             <option value="" disabled selected>选择主题</option>
-            <option value="default">自定义 (Default)</option>
+            <option value="default">自定义(Default)</option>
             <option value="novel">米色 </option>
             <option value="night">暗黑</option>
             <option value="clear">(还原)</option>
         </select>
 
-        <textarea id="css-editor" placeholder="在这里输入你的 CSS 代码..."></textarea>
+        <textarea id="css-editor" class="panel-textarea" placeholder="在这里输入你的 CSS 代码..."></textarea>
+    </div>
+
+    <div id="regex-panel" class="panel" style="width: 500px; height: 500px;"> <div class="panel-header">
+            <span>正则脚本管理器</span> 
+            <span style="cursor:pointer" onclick="togglePanel('regex-panel')">✖</span>
+        </div>
+
+        <div style="margin-bottom:10px; display:flex; gap:10px; border-bottom: 1px solid #333; padding-bottom: 10px;">
+            <label class="btn" style="flex:1; text-align:center; font-size:12px;">
+                📂导入新脚本
+                <input type="file" id="regexFileInput" accept=".json,.txt" multiple> </label>
+            <button class="btn" onclick="clearAllScripts()" style="flex:0 0 auto; font-size:12px; background:#5a1a1a;">清空所有</button>
+        </div>
+
+        <div style="display: flex; flex: 1; gap: 10px; overflow: hidden;">
+            
+            <div style="flex: 1; display: flex; flex-direction: column; gap: 5px;">
+                <div style="font-size: 12px; color: #888;">脚本列表</div>
+                <div id="script-list-container" style="flex: 1; overflow-y: auto; border: 1px solid #333; background: #111; padding: 5px;">
+                    <div style="text-align:center; color:#555; margin-top:20px;">暂无脚本</div>
+                </div>
+            </div>
+
+            <div style="flex: 1; display: flex; flex-direction: column; gap: 5px;">
+                <div style="font-size: 12px; color: #888;">选中脚本内容预览</div>
+                <textarea id="regex-editor" class="panel-textarea" readonly style="color: #aaa; font-size: 11px;" placeholder="点击左侧脚本查看详情..."></textarea>
+            </div>
+        </div>
+        
+        <div style="font-size:11px; color:#666; margin-top:5px; text-align: right;">
+            * 设置自动保存到浏览器缓存
+        </div>
     </div>
 
     <div id="chat-container">
@@ -264,8 +349,11 @@
         let allMessages = [];   
         let isPageMode = false; 
         let currentPage = 1;    
-        const pageSize = 10;
+        
+        const pageSize = 10;    //自定义单页数楼层显示数量
+        
         let currentFileKey = null;
+        let scriptLibrary = []; // 用来存储所有导入的脚本
 
         const fileInput = document.getElementById('fileInput');
         const chatContainer = document.getElementById('chat-container');
@@ -274,7 +362,9 @@
         const pageInfoSpan = document.getElementById('page-info');
         const toolbar = document.getElementById('toolbar');
         const cssPanel = document.getElementById('css-panel');
-        
+        const regexPanel = document.getElementById('regex-panel');  
+        const regexEditor = document.getElementById('regex-editor');  
+        const regexFileInput = document.getElementById('regexFileInput');
         const cssEditor = document.getElementById('css-editor');
         const customStyleTag = document.getElementById('custom-user-css');
         const themeSelect = document.getElementById('theme-select');
@@ -407,7 +497,42 @@
             paginationBar.classList.remove('pagination-hidden');
         }
 
-        // 模式切换
+        function applyUserRegex(text) {
+
+            if (!scriptLibrary || scriptLibrary.length === 0) return text;
+
+            let newText = text;
+
+            scriptLibrary.forEach(script => {
+                if (!script.active) return;
+
+                if (Array.isArray(script.rules)) {
+                    script.rules.forEach(rule => {
+                        try {
+                            let pattern = rule.regex;
+                            let replacement = rule.replacement || '';
+                            let flags = rule.flags || 'g';
+
+                            if (pattern && typeof pattern === 'string' && pattern.startsWith('/') && pattern.lastIndexOf('/') > 0) {
+                                const lastSlashIndex = pattern.lastIndexOf('/');
+                                const extractedFlags = pattern.substring(lastSlashIndex + 1);
+                                if (extractedFlags) flags = extractedFlags;
+                                pattern = pattern.substring(1, lastSlashIndex);
+                            }
+
+                            if (pattern) {
+                                const re = new RegExp(pattern, flags);
+                                newText = newText.replace(re, replacement);
+                            }
+                        } catch (e) {
+                        }
+                    });
+                }
+            });
+
+            return newText;
+        }
+
         function toggleMode() {
             isPageMode = !isPageMode;
             updateModeButtonUI();
@@ -435,23 +560,29 @@
             const isUser = data.is_user === true;
             const initial = name.charAt(0).toUpperCase();
 
-            text = text.replace(/<thinking>[\s\S]*?<\/thinking>/gi, '');    //隐藏思维链
+            text = applyUserRegex(text);
 
+            text = text.replace(/<thinking>[\s\S]*?<\/thinking>/gi, '');    //隐藏思维链
+            
             const htmlTags = [];
             text = text.replace(/<[^>]+>/g, function(match) {
                 htmlTags.push(match); 
                 return `%%%HTML_${htmlTags.length - 1}%%%`;
             });
             
+            // 对话上色
             const COLOR_START = '%%%COLOR_START%%%';
             const COLOR_END = '%%%COLOR_END%%%';
+            
             text = text.replace(/“([^”]+)”/g, `${COLOR_START}“$1”${COLOR_END}`);
             text = text.replace(/"([^"]+)"/g, `${COLOR_START}"$1"${COLOR_END}`);
+
             text = text.replace(/%%%HTML_(\d+)%%%/g, (match, index) => htmlTags[index]);
 
             let htmlContent = marked.parse(text);
             const realStyleStart = '<span style="color: #6a8caf; font-weight: bold;">';
             const realStyleEnd = '</span>';
+           
             htmlContent = htmlContent.split(COLOR_START).join(realStyleStart);
             htmlContent = htmlContent.split(COLOR_END).join(realStyleEnd);
 
@@ -493,8 +624,17 @@
         // 读取用户输入
         let userDraftCss = localStorage.getItem('st_reader_user_draft') || "";
 
-        function toggleCssPanel() {
-            cssPanel.style.display = cssPanel.style.display === 'flex' ? 'none' : 'flex';
+        function togglePanel(panelId) {
+            const panel = document.getElementById(panelId);
+            if (!panel) return;
+
+            const currentDisplay = panel.style.display;
+        
+            document.querySelectorAll('.panel').forEach(p => p.style.display = 'none');
+        
+            if (currentDisplay !== 'flex') {
+                panel.style.display = 'flex';
+            }
         }
 
         themeSelect.addEventListener('change', function() {
@@ -523,22 +663,28 @@
         });
 
         window.addEventListener('load', function() {
-
-            const saved = localStorage.getItem('st_reader_custom_css');
-            if(saved) { 
-                cssEditor.value = saved; 
-                customStyleTag.textContent = saved; 
+            // 加载 CSS
+            const savedCss = localStorage.getItem('st_reader_custom_css');
+            if(savedCss) { 
+                cssEditor.value = savedCss; 
+                customStyleTag.textContent = savedCss; 
+                userDraftCss = savedCss;
             }
-
             themeSelect.value = "default";
-            
-            if (saved) {
-               userDraftCss = saved;
+
+            // 加载正则脚本库
+            const savedScripts = localStorage.getItem('st_reader_script_lib');
+            if (savedScripts) {
+                try {
+                    scriptLibrary = JSON.parse(savedScripts);
+                    renderScriptList();
+                } catch(e) { 
+                    console.error("读取脚本缓存失败", e); 
+                    scriptLibrary = [];
+                }
             }
         });
 
-
-        // 新增：点击页码变成输入框跳转
         pageInfoSpan.addEventListener('click', function() {
 
             if (this.querySelector('input')) return;
@@ -556,24 +702,21 @@
                 if (e.key === 'Enter') {
                     const val = parseInt(this.value);
                     
+                    // 验证数字是否ok
                     if (!isNaN(val) && val >= 1 && val <= totalPages) {
                         currentPage = val;
                         renderCurrentView();
-                        saveProgress();
+                        saveProgress();     // 保存进度
                     } else {
-
                         renderCurrentView(); 
                     }
                 }
-
                 e.stopPropagation();
             });
-
 
             input.addEventListener('blur', function() {
 
                 setTimeout(() => {
-
                     if (pageInfoSpan.querySelector('input')) {
                         renderCurrentView(); 
                     }
@@ -593,15 +736,166 @@
             if (scrollTop < 0) return;
 
             if (scrollTop > lastScrollTop && scrollTop > 50) {
+                
                 toolbar.classList.add('toolbar-hidden');
                 paginationBar.classList.add('pagination-hidden');
-                if(cssPanel.style.display === 'flex') toggleCssPanel();
+
+                document.querySelectorAll('.panel').forEach(p => p.style.display = 'none');
             } else if (scrollTop < lastScrollTop) {
+                
                 toolbar.classList.remove('toolbar-hidden');
                 paginationBar.classList.remove('pagination-hidden');
             }
             lastScrollTop = scrollTop;
         });
+
+        // 脚本管理器逻辑 (新增区域)
+        const regexFileInputEl = document.getElementById('regexFileInput');
+        if (regexFileInputEl) {
+            regexFileInputEl.addEventListener('change', function(e) {
+                const files = Array.from(e.target.files);
+                if (files.length === 0) return;
+
+                let processedCount = 0;
+
+                files.forEach(file => {
+                    const reader = new FileReader();
+                    reader.onload = (loadEvent) => {
+                        try {
+                            const content = loadEvent.target.result;
+                            let data = JSON.parse(content);
+                            let rules = [];
+
+                            if (Array.isArray(data)) {
+                                
+                                rules = data;
+                            } else if (data.regexList && Array.isArray(data.regexList)) {
+                                
+                                rules = data.regexList;
+                            } else if (typeof data === 'object') {
+                                
+                                rules = [data]; 
+                            }
+
+                            if (rules.length > 0) {
+
+                                scriptLibrary.push({
+                                    
+                                    id: Date.now() + Math.random().toString(),
+                                    name: file.name.replace(/\.(json|txt)$/i, ''),
+                                    active: true,
+                                    rules: rules
+                                });
+                            }
+                        } catch (err) {
+                            
+                            console.warn(`文件 ${file.name} 解析失败`, err);
+                            alert(`文件 ${file.name} 格式不正确，跳过。`);
+                        } finally {
+                            processedCount++;
+
+                            if (processedCount === files.length) {
+                                saveScripts();
+                                renderScriptList();
+                                renderCurrentView();
+                                regexFileInputEl.value = '';
+                            }
+                        }
+                    };
+                    reader.readAsText(file);
+                });
+            });
+        }
+
+        function renderScriptList() {
+            const container = document.getElementById('script-list-container');
+            if (!container) return;
+
+            container.innerHTML = '';
+
+            if (scriptLibrary.length === 0) {
+                container.innerHTML = '<div style="text-align:center; color:#555; margin-top:20px; font-size:12px;">暂无脚本<br>请点击上方导入</div>';
+                return;
+            }
+
+            scriptLibrary.forEach((script, index) => {
+                const div = document.createElement('div');
+                div.className = 'script-item'; // 使用 CSS 定义的样式
+                
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.checked = script.active;
+                checkbox.onclick = (e) => { e.stopPropagation(); toggleScriptActive(index); };
+
+
+                const nameSpan = document.createElement('span');
+                nameSpan.className = 'script-name';
+                nameSpan.textContent = script.name;
+                nameSpan.onclick = () => previewScript(index);
+
+                const delBtn = document.createElement('button');
+                delBtn.className = 'btn-del';
+                delBtn.innerHTML = '✖';
+                delBtn.title = '删除';
+                delBtn.onclick = (e) => { e.stopPropagation(); deleteScript(index); };
+
+                div.appendChild(checkbox);
+                div.appendChild(nameSpan);
+                div.appendChild(delBtn);
+                container.appendChild(div);
+            });
+        }
+
+        // 切换脚本启用/禁用
+        function toggleScriptActive(index) {
+            if (scriptLibrary[index]) {
+                scriptLibrary[index].active = !scriptLibrary[index].active;
+                saveScripts();
+                renderCurrentView();
+            }
+        }
+
+        // 删除脚本
+        function deleteScript(index) {
+            if (confirm(`确定要删除脚本 "${scriptLibrary[index].name}" 吗？`)) {
+                scriptLibrary.splice(index, 1);
+                saveScripts();
+                renderScriptList();
+                
+                const editor = document.getElementById('regex-editor');
+                if (editor) editor.value = '';
+                
+                renderCurrentView();
+            }
+        }
+
+        //清空所有
+        function clearAllScripts() {
+            if (scriptLibrary.length === 0) return;
+            if (confirm('⚠️ 确定要清空所有已导入的正则脚本吗？')) {
+                scriptLibrary = [];
+                saveScripts();
+                renderScriptList();
+                document.getElementById('regex-editor').value = '';
+                renderCurrentView();
+            }
+        }
+
+        //预览脚本内容
+        function previewScript(index) {
+            const script = scriptLibrary[index];
+            const editor = document.getElementById('regex-editor');
+            if (script && editor) {
+
+                editor.value = JSON.stringify(script.rules, null, 2);
+            }
+        }
+
+        // 保存到 LocalStorage
+        function saveScripts() {
+            localStorage.setItem('st_reader_script_lib', JSON.stringify(scriptLibrary));
+        }
+        
     </script>
 </body>
 </html>
