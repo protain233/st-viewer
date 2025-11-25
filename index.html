@@ -276,7 +276,7 @@
             <input type="file" id="fileInput" accept=".jsonl,.txt,.json">
         </label>
 
-        <button class="btn" id="mode-btn" onclick="toggleMode()">(￣▽￣)切换到翻页</button>
+        <button class="btn" id="mode-btn" onclick="toggleMode()">😺切换到翻页</button>
 
         <button class="btn" onclick="togglePanel('regex-panel')">📃正则脚本</button>
 
@@ -452,11 +452,11 @@
 
         function updateModeButtonUI() {
             if (isPageMode) {
-                modeBtn.textContent = "(￣ω￣)切换到滑动";
+                modeBtn.textContent = "😸切换到滑动";
                 modeBtn.classList.add('active');
                 paginationBar.style.display = 'flex'; 
             } else {
-                modeBtn.textContent = "(￣▽￣)切换到翻页";
+                modeBtn.textContent = "😺切换到翻页";
                 modeBtn.classList.remove('active');
                 paginationBar.style.display = 'none'; 
             }
