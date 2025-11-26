@@ -52,14 +52,13 @@
 
         .pagination-hidden { transform: translateY(100%); }
 
-        /* 修改：页码指示器样式 */
+        /* 页码指示器样式  */
         #page-info { 
             color: #ccc; 
             font-size: 14px; 
             min-width: 80px; 
             text-align: center; 
             
-            /* 新增：让鼠标放上去提示可点击 */
             cursor: pointer; 
             user-select: none;
             padding: 5px 10px;
@@ -67,11 +66,10 @@
             transition: background 0.2s;
         }
         #page-info:hover {
-            background-color: rgba(255, 255, 255, 0.1); /* 悬停高亮 */
+            background-color: rgba(255, 255, 255, 0.1);
             color: #fff;
         }
 
-        /* 新增：临时输入框的样式 */
         .page-jump-input {
             width: 40px; 
             background: #111; 
@@ -82,7 +80,7 @@
             font-size: 14px;
             outline: none;
         }
-        
+
         .page-jump-input::-webkit-outer-spin-button,
         .page-jump-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 
@@ -92,7 +90,7 @@
             background: #1f232c; border: 1px solid #444;
             box-shadow: 0 5px 15px rgba(0,0,0,0.5);
             border-radius: 8px; display: none; flex-direction: column; 
-            display: none; flex-direction: column;  /* 新增其他保持不变 */
+            display: none; flex-direction: column;
             z-index: 200; padding: 10px;
         }
 
@@ -118,10 +116,9 @@
         
         .panel-header { display: flex; justify-content: space-between; margin-bottom: 8px; color: #ccc; font-size: 14px;}
 
-        /*通用文本框样式 */
+        /* 通用文本框样式 */
         .panel-textarea {
         flex: 1; background: #111; color: #00ff00;
-        /* ... */
         }
 
         #chat-container {
@@ -272,14 +269,17 @@
         <h2>ST Viewer [by蛋白233]</h2>
         
         <label class="btn">
-            📁导入文件(.jsonl)
-            <input type="file" id="fileInput" accept=".jsonl,.txt,.json">
-        </label>
+            📁导入新对话
+            <input type="file" id="fileInput" accept=".jsonl,.txt,.json" multiple> </label>
+
+        <select id="chat-select" style="background:#111; color:#ccc; border:1px solid #444; padding:5px; border-radius:4px; max-width: 200px;">
+            <option value="" disabled selected> 请选择对话 </option>
+        </select>
+
+        <button class="btn" id="del-chat-btn" onclick="deleteCurrentChat()" style="background:#5a1a1a; padding:5px 10px; font-size:12px; display:none;">🗑️</button>
 
         <button class="btn" id="mode-btn" onclick="toggleMode()">😺切换到翻页</button>
-
         <button class="btn" onclick="togglePanel('regex-panel')">📃正则脚本</button>
-
         <button class="btn" onclick="togglePanel('css-panel')">🎨CSS样式</button>
     </div>
 
@@ -306,6 +306,8 @@
         <textarea id="css-editor" class="panel-textarea" placeholder="在这里输入你的 CSS 代码..."></textarea>
     </div>
 
+    <!-- 添加面板结构 -->
+
     <div id="regex-panel" class="panel" style="width: 500px; height: 500px;"> <div class="panel-header">
             <span>正则脚本管理器</span> 
             <span style="cursor:pointer" onclick="togglePanel('regex-panel')">✖</span>
@@ -313,7 +315,7 @@
 
         <div style="margin-bottom:10px; display:flex; gap:10px; border-bottom: 1px solid #333; padding-bottom: 10px;">
             <label class="btn" style="flex:1; text-align:center; font-size:12px;">
-                📂导入新脚本
+                📂 导入新脚本
                 <input type="file" id="regexFileInput" accept=".json,.txt" multiple> </label>
             <button class="btn" onclick="clearAllScripts()" style="flex:0 0 auto; font-size:12px; background:#5a1a1a;">清空所有</button>
         </div>
@@ -321,7 +323,7 @@
         <div style="display: flex; flex: 1; gap: 10px; overflow: hidden;">
             
             <div style="flex: 1; display: flex; flex-direction: column; gap: 5px;">
-                <div style="font-size: 12px; color: #888;">脚本列表</div>
+                <div style="font-size: 12px; color: #888;">脚本列表 (点击开关启用)</div>
                 <div id="script-list-container" style="flex: 1; overflow-y: auto; border: 1px solid #333; background: #111; padding: 5px;">
                     <div style="text-align:center; color:#555; margin-top:20px;">暂无脚本</div>
                 </div>
@@ -345,15 +347,71 @@
     </div>
 
     <script>
+
+    // IndexedDB 
+    const dbName = "STViewerDB";
+    const storeName = "chats";
+
+    function openDB() {
+        return new Promise((resolve, reject) => {
+            const request = indexedDB.open(dbName, 1);
+            request.onupgradeneeded = (e) => {
+                const db = e.target.result;
+                if (!db.objectStoreNames.contains(storeName)) {
+                    db.createObjectStore(storeName, { keyPath: "id" });
+                }
+            };
+            request.onsuccess = (e) => resolve(e.target.result);
+            request.onerror = (e) => reject(e);
+        });
+    }
+
+    async function saveChatToDB(chatData) {
+        const db = await openDB();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(storeName, "readwrite");
+            const store = tx.objectStore(storeName);
+            store.put(chatData);
+            tx.oncomplete = () => resolve();
+            tx.onerror = (e) => reject(e);
+        });
+    }
+
+    async function getAllChatsFromDB() {
+        const db = await openDB();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(storeName, "readonly");
+            const store = tx.objectStore(storeName);
+            const request = store.getAll(); // 获取所有记录
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = (e) => reject(e);
+        });
+    }
+
+    async function deleteChatFromDB(id) {
+        const db = await openDB();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(storeName, "readwrite");
+            const store = tx.objectStore(storeName);
+            store.delete(id);
+            tx.oncomplete = () => resolve();
+            tx.onerror = (e) => reject(e);
+        });
+    }
+//---------------------------------------------------------------------//
         // 全局变量
         let allMessages = [];   
         let isPageMode = false; 
         let currentPage = 1;    
+        let currentChatId = null;
         
-        const pageSize = 10;    //自定义单页数楼层显示数量
+        const pageSize = 10;
         
-        let currentFileKey = null;
-        let scriptLibrary = []; // 用来存储所有导入的脚本
+        let currentFileKey = null;  
+        let scriptLibrary = [];
+
+        const chatSelect = document.getElementById('chat-select');
+        const delChatBtn = document.getElementById('del-chat-btn');
 
         const fileInput = document.getElementById('fileInput');
         const chatContainer = document.getElementById('chat-container');
@@ -369,31 +427,71 @@
         const customStyleTag = document.getElementById('custom-user-css');
         const themeSelect = document.getElementById('theme-select');
 
-        fileInput.addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (!file) return;
+        // 监听文件
+        fileInput.addEventListener('change', async function(e) {
+            const files = Array.from(e.target.files);
+            if (files.length === 0) return;
 
-            currentFileKey = "st_progress_" + file.name + "_" + file.size;
+            let importedCount = 0;
 
-            const reader = new FileReader();
-            reader.onload = (e) => parseChat(e.target.result);
-            reader.readAsText(file);
+            for (const file of files) {
+                const text = await file.text();
+                const messages = parseChatContent(text);
+                
+                if (messages.length > 0) {
+
+                    const chatId = "chat_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
+                    
+                    const fileName = file.name.replace(/\.(jsonl|txt|json)$/i, '');
+                    
+                    let charName = "未知角色";
+                    const firstCharMsg = messages.find(m => !m.is_user && m.name);
+                    if (firstCharMsg) {
+                        charName = firstCharMsg.name;
+                    }
+
+                    // (格式：角色名 + 文件名)
+                    const displayName = `${charName} - ${fileName}`;
+
+                    const chatRecord = {
+                        id: chatId,
+                        name: displayName,
+                        messages: messages,
+                        progress: { mode: false, page: 1, scrollTop: 0 },
+                        timestamp: Date.now()
+                    };
+
+                    await saveChatToDB(chatRecord);
+                    importedCount++;
+                }
+            }
+
+            if (importedCount > 0) {
+                alert(`成功导入 ${importedCount} 个对话！`);
+                await refreshChatList(); 
+
+                if (!currentChatId) {
+                    const allChats = await getAllChatsFromDB();
+                    const latest = allChats.sort((a,b) => b.timestamp - a.timestamp)[0];
+                    if(latest) switchChat(latest.id);
+                }
+            }
+            fileInput.value = ''; 
         });
 
-        function parseChat(content) {
-            allMessages = []; 
+        function parseChatContent(content) {
+            const msgs = [];
             const lines = content.split('\n');
             lines.forEach((line) => {
                 if (!line.trim()) return;
                 try {
                     const data = JSON.parse(line);
                     if (data.name || data.mes) {
-                        allMessages.push(data); 
+                        msgs.push(data); 
                     }
                 } catch (err) {}
             });
-            
-            loadProgress();
+            return msgs;
         }
 
         function loadProgress() {
@@ -438,16 +536,18 @@
             if(!isPageMode) setTimeout(() => { chatContainer.scrollTop = 0; }, 50);
         }
 
-        function saveProgress() {
-            if (!currentFileKey) return;
-
+        async function saveProgress() {
+            if (!currentChatId) return;
+        }
+        
+        function saveProgressRuntime() {
+            if (!currentChatId) return;
             const progress = {
                 mode: isPageMode,
                 page: currentPage,
                 scrollTop: chatContainer.scrollTop
             };
-
-            localStorage.setItem(currentFileKey, JSON.stringify(progress));
+            localStorage.setItem("st_runtime_" + currentChatId, JSON.stringify(progress));
         }
 
         function updateModeButtonUI() {
@@ -489,7 +589,7 @@
 
             if (!isPageMode) {
                 setTimeout(() => {
-                    chatContainer.scrollTop = 0; // 导入后回顶部
+                    chatContainer.scrollTop = 0;
                 }, 50);
             }
             
@@ -498,12 +598,12 @@
         }
 
         function applyUserRegex(text) {
-
             if (!scriptLibrary || scriptLibrary.length === 0) return text;
 
             let newText = text;
 
             scriptLibrary.forEach(script => {
+
                 if (!script.active) return;
 
                 if (Array.isArray(script.rules)) {
@@ -533,23 +633,62 @@
             return newText;
         }
 
+        // 保持阅读进度
         function toggleMode() {
+            if (!isPageMode) {
+
+                const scrollTop = chatContainer.scrollTop;
+                const rows = chatContainer.querySelectorAll('.message-row');
+                let topIndex = 0;
+
+                for (let i = 0; i < rows.length; i++) {
+
+                    if (rows[i].offsetTop >= scrollTop - 20) {
+                        topIndex = i;
+                        break;
+                    }
+                }
+                
+                currentPage = Math.floor(topIndex / pageSize) + 1;
+            }
+
             isPageMode = !isPageMode;
             updateModeButtonUI();
-            
-            if(isPageMode) currentPage = 1; 
 
             renderCurrentView();
+
+            if (isPageMode) {
+
+                chatContainer.scrollTop = 0;
+            } else {
+
+                setTimeout(() => {
+                    const targetIndex = (currentPage - 1) * pageSize;
+                    const rows = chatContainer.querySelectorAll('.message-row');
+
+                    if (rows[targetIndex]) {
+                        rows[targetIndex].scrollIntoView({ behavior: 'auto', block: 'start' });
+                    }
+                }, 50);
+            }
+
             saveProgress();
         }
 
+        // 翻页
         function changePage(delta) {
+
             const totalPages = Math.ceil(allMessages.length / pageSize);
             const newPage = currentPage + delta;
+            
             if (newPage >= 1 && newPage <= totalPages) {
                 currentPage = newPage;
                 renderCurrentView();
-                saveProgress();
+                
+                if (currentChatId) {
+                    const progress = { mode: isPageMode, page: currentPage, scrollTop: 0 };
+                    localStorage.setItem("st_runtime_" + currentChatId, JSON.stringify(progress));
+                }
             }
         }
 
@@ -573,7 +712,6 @@
             // 对话上色
             const COLOR_START = '%%%COLOR_START%%%';
             const COLOR_END = '%%%COLOR_END%%%';
-            
             text = text.replace(/“([^”]+)”/g, `${COLOR_START}“$1”${COLOR_END}`);
             text = text.replace(/"([^"]+)"/g, `${COLOR_START}"$1"${COLOR_END}`);
 
@@ -582,7 +720,6 @@
             let htmlContent = marked.parse(text);
             const realStyleStart = '<span style="color: #6a8caf; font-weight: bold;">';
             const realStyleEnd = '</span>';
-           
             htmlContent = htmlContent.split(COLOR_START).join(realStyleStart);
             htmlContent = htmlContent.split(COLOR_END).join(realStyleEnd);
 
@@ -610,7 +747,7 @@
             .bubble strong, .bubble b { color: #000000 !important; font-weight: 900 !important; }
             .bubble h1, .bubble h2, .bubble h3 { color: #000000 !important; border-bottom: 1px solid #ccc; }`,
 
-            "night": `/* 暗黑 */
+            "night": `/* 暗色 */
             body, #chat-container { background-color: #111111 !important; background-image: none !important; color: #b0b0b0 !important; }
             #toolbar, #pagination-bar { background-color: #1a1a1a !important; border-color: #333 !important; }
             .avatar, .char-name { display: none !important; }
@@ -624,6 +761,7 @@
         // 读取用户输入
         let userDraftCss = localStorage.getItem('st_reader_user_draft') || "";
 
+        // 通用面板
         function togglePanel(panelId) {
             const panel = document.getElementById(panelId);
             if (!panel) return;
@@ -662,7 +800,7 @@
             }
         });
 
-        window.addEventListener('load', function() {
+        window.addEventListener('load', async function() {
             // 加载 CSS
             const savedCss = localStorage.getItem('st_reader_custom_css');
             if(savedCss) { 
@@ -672,19 +810,100 @@
             }
             themeSelect.value = "default";
 
-            // 加载正则脚本库
+            // 加载正则库
             const savedScripts = localStorage.getItem('st_reader_script_lib');
             if (savedScripts) {
-                try {
-                    scriptLibrary = JSON.parse(savedScripts);
-                    renderScriptList();
-                } catch(e) { 
-                    console.error("读取脚本缓存失败", e); 
-                    scriptLibrary = [];
-                }
+                try { scriptLibrary = JSON.parse(savedScripts); renderScriptList(); } 
+                catch(e) { console.error(e); }
             }
+
+            // 加载数据库中的聊天记录列表
+            await refreshChatList();
         });
 
+        async function refreshChatList() {
+            const chats = await getAllChatsFromDB();
+            
+            chats.sort((a, b) => b.timestamp - a.timestamp);
+
+            chatSelect.innerHTML = '<option value="" disabled selected>-- 请选择对话 --</option>';
+            
+            chats.forEach(chat => {
+                const option = document.createElement('option');
+                option.value = chat.id;
+                option.textContent = chat.name;
+                chatSelect.appendChild(option);
+            });
+
+            if (currentChatId) {
+                chatSelect.value = currentChatId;
+                delChatBtn.style.display = 'inline-block';
+            } else {
+                delChatBtn.style.display = 'none';
+            }
+        }
+
+        chatSelect.addEventListener('change', function() {
+            switchChat(this.value);
+        });
+
+        async function switchChat(id) {
+            const chats = await getAllChatsFromDB();
+            const targetChat = chats.find(c => c.id === id);
+
+            if (targetChat) {
+                currentChatId = targetChat.id;
+                allMessages = targetChat.messages;
+                
+                const runtimeKey = "st_runtime_" + id;
+                const runtimeData = localStorage.getItem(runtimeKey);
+                
+                let loadMode = false;
+                let loadPage = 1;
+                let loadScroll = 0;
+
+                if (runtimeData) {
+                    const p = JSON.parse(runtimeData);
+                    loadMode = p.mode;
+                    loadPage = p.page;
+                    loadScroll = p.scrollTop;
+                } else if (targetChat.progress) {
+                    loadMode = targetChat.progress.mode;
+                    loadPage = targetChat.progress.page;
+                    loadScroll = targetChat.progress.scrollTop;
+                }
+
+                isPageMode = loadMode;
+                currentPage = loadPage;
+                
+                updateModeButtonUI();
+                renderCurrentView();
+
+                if (!isPageMode) {
+                    setTimeout(() => { chatContainer.scrollTop = loadScroll; }, 50);
+                }
+
+                delChatBtn.style.display = 'inline-block';
+                chatSelect.value = id;
+            }
+        }
+
+        async function deleteCurrentChat() {
+            if (!currentChatId) return;
+            if (confirm("确定要删除当前选中的对话记录吗？此操作不可恢复。")) {
+                await deleteChatFromDB(currentChatId);
+                
+                currentChatId = null;
+                allMessages = [];
+                chatContainer.innerHTML = '<div style="text-align: center; color: #555; margin-top: 50px;">已删除，请选择其他对话</div>';
+                
+                await refreshChatList();
+            }
+        }
+
+
+        // 点击页码变成输入框跳转
+        
         pageInfoSpan.addEventListener('click', function() {
 
             if (this.querySelector('input')) return;
@@ -702,21 +921,22 @@
                 if (e.key === 'Enter') {
                     const val = parseInt(this.value);
                     
-                    // 验证数字是否ok
                     if (!isNaN(val) && val >= 1 && val <= totalPages) {
                         currentPage = val;
                         renderCurrentView();
-                        saveProgress();     // 保存进度
+                        saveProgress();
                     } else {
                         renderCurrentView(); 
                     }
                 }
+
                 e.stopPropagation();
             });
 
             input.addEventListener('blur', function() {
 
                 setTimeout(() => {
+
                     if (pageInfoSpan.querySelector('input')) {
                         renderCurrentView(); 
                     }
@@ -728,28 +948,33 @@
 
         let lastScrollTop = 0; 
         
+        // 滚动监听
         chatContainer.addEventListener('scroll', function() {
             const scrollTop = chatContainer.scrollTop;
             
-            if (currentFileKey) saveProgress();
-            
-            if (scrollTop < 0) return;
+            if (currentChatId) {
+                const progress = {
+                    mode: isPageMode,
+                    page: currentPage,
+                    scrollTop: scrollTop
+                };
+                localStorage.setItem("st_runtime_" + currentChatId, JSON.stringify(progress));
+            }
 
+            // UI 隐藏
+            if (scrollTop < 0) return;
             if (scrollTop > lastScrollTop && scrollTop > 50) {
-                
                 toolbar.classList.add('toolbar-hidden');
                 paginationBar.classList.add('pagination-hidden');
-
                 document.querySelectorAll('.panel').forEach(p => p.style.display = 'none');
             } else if (scrollTop < lastScrollTop) {
-                
                 toolbar.classList.remove('toolbar-hidden');
                 paginationBar.classList.remove('pagination-hidden');
             }
             lastScrollTop = scrollTop;
         });
 
-        // 脚本管理器逻辑 (新增区域)
+        // 脚本管理器逻辑
         const regexFileInputEl = document.getElementById('regexFileInput');
         if (regexFileInputEl) {
             regexFileInputEl.addEventListener('change', function(e) {
@@ -767,20 +992,16 @@
                             let rules = [];
 
                             if (Array.isArray(data)) {
-                                
                                 rules = data;
                             } else if (data.regexList && Array.isArray(data.regexList)) {
-                                
                                 rules = data.regexList;
                             } else if (typeof data === 'object') {
-                                
                                 rules = [data]; 
                             }
 
                             if (rules.length > 0) {
 
                                 scriptLibrary.push({
-                                    
                                     id: Date.now() + Math.random().toString(),
                                     name: file.name.replace(/\.(json|txt)$/i, ''),
                                     active: true,
@@ -788,7 +1009,6 @@
                                 });
                             }
                         } catch (err) {
-                            
                             console.warn(`文件 ${file.name} 解析失败`, err);
                             alert(`文件 ${file.name} 格式不正确，跳过。`);
                         } finally {
@@ -825,8 +1045,8 @@
                 const checkbox = document.createElement('input');
                 checkbox.type = 'checkbox';
                 checkbox.checked = script.active;
-                checkbox.onclick = (e) => { e.stopPropagation(); toggleScriptActive(index); };
 
+                checkbox.onclick = (e) => { e.stopPropagation(); toggleScriptActive(index); };
 
                 const nameSpan = document.createElement('span');
                 nameSpan.className = 'script-name';
@@ -855,7 +1075,6 @@
             }
         }
 
-        // 删除脚本
         function deleteScript(index) {
             if (confirm(`确定要删除脚本 "${scriptLibrary[index].name}" 吗？`)) {
                 scriptLibrary.splice(index, 1);
@@ -869,7 +1088,6 @@
             }
         }
 
-        //清空所有
         function clearAllScripts() {
             if (scriptLibrary.length === 0) return;
             if (confirm('⚠️ 确定要清空所有已导入的正则脚本吗？')) {
@@ -881,8 +1099,8 @@
             }
         }
 
-        //预览脚本内容
         function previewScript(index) {
+
             const script = scriptLibrary[index];
             const editor = document.getElementById('regex-editor');
             if (script && editor) {
@@ -891,7 +1109,6 @@
             }
         }
 
-        // 保存到 LocalStorage
         function saveScripts() {
             localStorage.setItem('st_reader_script_lib', JSON.stringify(scriptLibrary));
         }
