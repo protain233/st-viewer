@@ -21,4 +21,4 @@ web：https://protain233.github.io/st-viewer/
 
 自动识别角色名：会尝试读取聊天记录里的 角色名+文件名称 作为选项标题  Auto identify character names: "Character Name + Filename" as the option title
 
-使阅读器适配手机端
+使阅读器更加适配手机端
