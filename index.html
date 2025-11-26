@@ -35,6 +35,77 @@
         }
         .btn:hover { background: #3e4452; color: white; }
         .btn.active { background: #4a5f7a; color: white; border-color: #6a8caf; }
+
+        /*------------------------------------------------------------------*/
+        .custom-select-wrapper {
+            position: relative;
+            width: 200px;
+            font-size: 14px;
+            user-select: none;
+        }
+
+        .select-trigger {
+            background: #111;
+            color: #ccc;
+            border: 1px solid #444;
+            padding: 8px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .select-trigger:hover { border-color: #666; }
+        .select-trigger::after { content: '▼'; font-size: 10px; margin-left: 10px; }
+
+        .select-dropdown {
+            position: absolute;
+            top: 110%; left: 0; right: 0;
+            background: #1f232c;
+            border: 1px solid #444;
+            border-radius: 5px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.8);
+            z-index: 1000;
+            max-height: 400px;
+            overflow-y: auto;
+            display: none;
+        }
+        
+        .select-dropdown.open { display: block; animation: fadeIn 0.1s; }
+
+        .group-header {
+            background: #2b303b;
+            color: #aab0c0;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-weight: bold;
+            border-bottom: 1px solid #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .group-header:hover { background: #3e4452; color: #fff; }
+        .group-header .arrow { font-size: 10px; transition: transform 0.2s; }
+        .group-header.active .arrow { transform: rotate(180deg); }
+
+        .group-content {
+            display: none;
+            background: #16191f;
+        }
+        .group-content.expanded { display: block; }
+
+        .option-item {
+            padding: 8px 15px;
+            padding-left: 20px;
+            color: #888;
+            cursor: pointer;
+            border-bottom: 1px solid #222;
+            transition: background 0.1s;
+        }
+        .option-item:hover { background: #242830; color: #ddd; }
+        .option-item.selected { color: #6a8caf; background: #20242b; border-left: 3px solid #6a8caf; }
+
+        /*----------------------------------------------------------*/
         
         input[type="file"] { display: none; } 
 
@@ -272,9 +343,13 @@
             📁导入新对话
             <input type="file" id="fileInput" accept=".jsonl,.txt,.json" multiple> </label>
 
-        <select id="chat-select" style="background:#111; color:#ccc; border:1px solid #444; padding:5px; border-radius:4px; max-width: 200px;">
-            <option value="" disabled selected> 请选择对话 </option>
-        </select>
+        <div class="custom-select-wrapper" id="custom-chat-select">
+            <div class="select-trigger" onclick="toggleDropdown()">
+                <span id="trigger-text">-- 请选择对话 --</span>
+            </div>
+            <div class="select-dropdown" id="dropdown-list">
+                </div>
+        </div>
 
         <button class="btn" id="del-chat-btn" onclick="deleteCurrentChat()" style="background:#5a1a1a; padding:5px 10px; font-size:12px; display:none;">🗑️</button>
 
@@ -410,7 +485,6 @@
         let currentFileKey = null;  
         let scriptLibrary = [];
 
-        const chatSelect = document.getElementById('chat-select');
         const delChatBtn = document.getElementById('del-chat-btn');
 
         const fileInput = document.getElementById('fileInput');
@@ -441,7 +515,6 @@
                 if (messages.length > 0) {
 
                     const chatId = "chat_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
-                    
                     const fileName = file.name.replace(/\.(jsonl|txt|json)$/i, '');
                     
                     let charName = "未知角色";
@@ -455,7 +528,8 @@
 
                     const chatRecord = {
                         id: chatId,
-                        name: displayName,
+                        name: displayName, 
+                        characterName: charName,
                         messages: messages,
                         progress: { mode: false, page: 1, scrollTop: 0 },
                         timestamp: Date.now()
@@ -821,31 +895,114 @@
             await refreshChatList();
         });
 
-        async function refreshChatList() {
-            const chats = await getAllChatsFromDB();
+        function toggleDropdown() {
+            const dropdown = document.getElementById('dropdown-list');
+            const isOpen = dropdown.classList.contains('open');
             
-            chats.sort((a, b) => b.timestamp - a.timestamp);
-
-            chatSelect.innerHTML = '<option value="" disabled selected>-- 请选择对话 --</option>';
+            // 关闭其他所有可能打开的面板
+            document.querySelectorAll('.panel').forEach(p => p.style.display = 'none');
             
-            chats.forEach(chat => {
-                const option = document.createElement('option');
-                option.value = chat.id;
-                option.textContent = chat.name;
-                chatSelect.appendChild(option);
-            });
-
-            if (currentChatId) {
-                chatSelect.value = currentChatId;
-                delChatBtn.style.display = 'inline-block';
+            if (isOpen) {
+                dropdown.classList.remove('open');
             } else {
-                delChatBtn.style.display = 'none';
+                dropdown.classList.add('open');
             }
         }
 
-        chatSelect.addEventListener('change', function() {
-            switchChat(this.value);
+        // 点击页面其他地方关闭下拉菜单
+        document.addEventListener('click', function(e) {
+            const wrapper = document.getElementById('custom-chat-select');
+            if (wrapper && !wrapper.contains(e.target)) {
+                document.getElementById('dropdown-list').classList.remove('open');
+            }
         });
+
+
+        async function refreshChatList() {
+            const chats = await getAllChatsFromDB();
+            chats.sort((a, b) => b.timestamp - a.timestamp); // 按时间倒序
+
+            const dropdownList = document.getElementById('dropdown-list');
+            dropdownList.innerHTML = ''; // 清空列表
+
+            if (chats.length === 0) {
+                dropdownList.innerHTML = '<div style="padding:10px; color:#555; text-align:center;">暂无记录</div>';
+                document.getElementById('trigger-text').textContent = '-- 请选择对话 --';
+                return;
+            }
+
+            const groups = new Map();
+            chats.forEach(chat => {
+                let groupName = chat.characterName;
+
+                if (!groupName) {
+                    if (chat.name && chat.name.includes(' - ')) {
+                        groupName = chat.name.split(' - ')[0];
+                    } else {
+                        groupName = "未分类";
+                    }
+                }
+                if (!groups.has(groupName)) groups.set(groupName, []);
+                groups.get(groupName).push(chat);
+            });
+
+            for (const [groupName, chatList] of groups) {
+
+                const header = document.createElement('div');
+                header.className = 'group-header';
+                header.innerHTML = `<span>${groupName} (${chatList.length})</span> <span class="arrow">▼</span>`;
+                
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'group-content';
+
+                chatList.forEach(chat => {
+                    const item = document.createElement('div');
+                    item.className = 'option-item';
+
+                    let displayName = chat.name;
+                    if (displayName.startsWith(groupName + " - ")) {
+                        displayName = displayName.substring(groupName.length + 3);
+                    }
+                    item.textContent = displayName;
+                    
+                    if (currentChatId === chat.id) {
+                        item.classList.add('selected');
+                        contentDiv.classList.add('expanded');
+                        header.classList.add('active');
+                        document.getElementById('trigger-text').textContent = chat.name;
+                        delChatBtn.style.display = 'inline-block';
+                    }
+
+                    item.onclick = () => {
+                        switchChat(chat.id);
+                        document.getElementById('dropdown-list').classList.remove('open');
+                        refreshChatList();
+                    };
+
+                    contentDiv.appendChild(item);
+                });
+
+                header.onclick = (e) => {
+                    e.stopPropagation();
+                    const isExpanded = contentDiv.classList.contains('expanded');
+                    if (isExpanded) {
+                        contentDiv.classList.remove('expanded');
+                        header.classList.remove('active');
+                    } else {
+                        contentDiv.classList.add('expanded');
+                        header.classList.add('active');
+                    }
+                };
+
+                dropdownList.appendChild(header);
+                dropdownList.appendChild(contentDiv);
+            }
+
+            if (!currentChatId) {
+                delChatBtn.style.display = 'none';
+                document.getElementById('trigger-text').textContent = '-- 请选择对话 --';
+            }
+        }
 
         async function switchChat(id) {
             const chats = await getAllChatsFromDB();
@@ -884,7 +1041,11 @@
                 }
 
                 delChatBtn.style.display = 'inline-block';
-                chatSelect.value = id;
+                
+                const triggerText = document.getElementById('trigger-text');
+                if (triggerText) triggerText.textContent = targetChat.name;
+                
+                await refreshChatList();
             }
         }
 
