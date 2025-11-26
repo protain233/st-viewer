@@ -330,6 +330,82 @@
         }
         .btn-del:hover { color: #ff4444; }
 
+        /*  手机端适配 */
+        @media screen and (max-width: 768px) {
+
+            #toolbar {
+                flex-wrap: wrap;
+                padding: 10px;
+                gap: 8px;
+                height: auto;
+                justify-content: space-between;
+            }
+
+            h2 { 
+                display: none; 
+            }
+
+            .btn {
+                flex: 1 1 auto;
+                text-align: center;
+                font-size: 12px;
+                padding: 10px 5px;
+                white-space: nowrap;
+            }
+
+            .custom-select-wrapper {
+                width: 100%;
+                order: -1;
+                margin-bottom: 5px;
+            }
+            
+            .panel, #regex-panel, #css-panel {
+                width: 90vw !important;
+                height: 70vh !important;
+                top: 50% !important;
+                left: 50% !important;
+                right: auto !important;
+                transform: translate(-50%, -50%);
+                z-index: 1000;
+            }
+
+            #chat-container {
+                padding: 10px;
+                padding-top: 140px;
+                padding-bottom: 60px;
+            }
+
+            .message-row {
+                margin-bottom: 15px;
+            }
+
+            .avatar {
+                width: 35px; height: 35px;
+                margin-right: 8px;
+                font-size: 12px;
+            }
+            .message-user .avatar { margin-left: 8px; }
+
+            .bubble-content {
+                max-width: 85%;
+            }
+
+            .bubble {
+                padding: 10px 12px;
+                font-size: 14px;
+            }
+
+            #pagination-bar {
+                padding: 8px;
+                gap: 10px;
+            }
+            #page-info { font-size: 12px; min-width: auto; }
+            
+            #del-chat-btn {
+                flex: 0 0 auto;
+            }
+        }
+
     </style>
     
     <style id="custom-user-css"></style>
@@ -383,7 +459,7 @@
 
     <!-- 添加面板结构 -->
 
-    <div id="regex-panel" class="panel" style="width: 500px; height: 500px;"> <div class="panel-header">
+    <div id="regex-panel" class="panel"> <div class="panel-header">
             <span>正则脚本管理器</span> 
             <span style="cursor:pointer" onclick="togglePanel('regex-panel')">✖</span>
         </div>
