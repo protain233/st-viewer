@@ -20,3 +20,5 @@ web：https://protain233.github.io/st-viewer/
 自动将同一角色的不同存档归类到文件夹中	Chat files are now automatically grouped by character name
 
 自动识别角色名：会尝试读取聊天记录里的 角色名+文件名称 作为选项标题  Auto identify character names: "Character Name + Filename" as the option title
+
+使阅读器适配手机端
