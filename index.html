@@ -424,9 +424,8 @@
     <div id="toolbar">
         <h2>ST Viewer [by蛋白233]</h2>
         
-        <label class="btn">
-            📁导入新对话
-            <input type="file" id="fileInput" accept=".jsonl,.txt,.json" multiple> </label>
+        <button class="btn" onclick="document.getElementById('fileInput').click()">📁导入新对话</button>
+        <input type="file" id="fileInput" accept="*" multiple style="display:none">
 
         <div class="custom-select-wrapper" id="custom-chat-select">
             <div class="select-trigger" onclick="toggleDropdown()">
