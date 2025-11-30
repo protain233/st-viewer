@@ -27,4 +27,4 @@ web：https://protain233.github.io/st-viewer/
 
 修复ios无法导入问题
 
-添加用户自定义并保存css样式功能
+添加用户自定义并保存css样式功能 + 预设css预设更加适配手机端
