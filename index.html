@@ -450,19 +450,33 @@
 
     <div id="css-panel" class="panel">
         <div class="panel-header">
-            <span>自定义 CSS (自动保存)</span> 
+            <span>🎨 样式编辑器</span> 
             <span style="cursor:pointer" onclick="togglePanel('css-panel')">✖</span>
         </div>
         
-        <select id="theme-select">
-            <option value="" disabled selected>选择主题</option>
-            <option value="default">自定义(Default)</option>
-            <option value="novel">米色 </option>
-            <option value="night">暗黑</option>
-            <option value="clear">(还原)</option>
-        </select>
+        <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px;">
+            <select id="theme-select">
+                <option value="" disabled>-- 预设主题 --</option>
+                <option value="default" selected>当前编辑 (未保存)</option>
+                <option value="novel">米色</option>
+                <option value="night">暗色</option>
+                <option value="clear">还原默认</option>
+                <optgroup id="custom-themes-group" label="-- 我的收藏 --"></optgroup>
+            </select>
 
-        <textarea id="css-editor" class="panel-textarea" placeholder="在这里输入你的 CSS 代码..."></textarea>
+            <div style="display: flex; gap: 5px;">
+                <input type="text" id="theme-name-input" placeholder="输入样式名称..." 
+                    style="flex: 1; background: #111; color: #ccc; border: 1px solid #444; padding: 5px; border-radius: 4px; outline: none;">
+                <button class="btn" onclick="saveCustomTheme()" style="padding: 5px 10px; font-size: 12px;">💾 保存</button>
+                <button class="btn" onclick="deleteCustomTheme()" style="padding: 5px 10px; font-size: 12px; background: #5a1a1a;">🗑️</button>
+            </div>
+        </div>
+
+        <textarea id="css-editor" class="panel-textarea" placeholder="在这里输入 CSS 代码，或者选择一个主题进行修改..."></textarea>
+        
+        <div style="font-size:11px; color:#666; margin-top:5px; text-align: right;">
+            * 修改会自动应用，点击保存可存为新预设
+        </div>
     </div>
 
     <!-- 添加面板结构 -->
@@ -893,89 +907,189 @@
             chatContainer.appendChild(rowDiv);
         }
 
-        // CSS主题与保存逻辑
-        // 定义预设主题
+        // CSS 主题管理逻辑
+
         const PRESET_THEMES = {
             "novel": `/* 米色 */
-            body, #chat-container { background-color: #f2f1e4 !important; background-image: none !important; color: #2c3e50 !important; }
-            .avatar, .char-name { display: none !important; }
-            .bubble { background-color: transparent !important; border: none !important; box-shadow: none !important; padding: 0 !important; margin-bottom: 20px !important; font-size: 18px !important; line-height: 2.0 !important; color: #2c3e50 !important; font-family: "Segoe UI", sans-serif; }
-            .message-row, .message-user { flex-direction: row !important; justify-content: flex-start !important; }
-            .bubble-content { max-width: 100% !important; }
-            .bubble strong, .bubble b { color: #000000 !important; font-weight: 900 !important; }
-            .bubble h1, .bubble h2, .bubble h3 { color: #000000 !important; border-bottom: 1px solid #ccc; }`,
+body, #chat-container { background-color: #f2f1e4 !important; background-image: none !important; color: #2c3e50 !important; }
+.avatar, .char-name { display: none !important; }
+.bubble { background-color: transparent !important; border: none !important; box-shadow: none !important; padding: 0 !important; margin-bottom: 20px !important; font-size: 18px !important; line-height: 2.0 !important; color: #2c3e50 !important; font-family: "Segoe UI", sans-serif; }
+.message-row, .message-user { flex-direction: row !important; justify-content: flex-start !important; }
+.bubble-content { max-width: 100% !important; }
+.bubble strong, .bubble b { color: #000000 !important; font-weight: 900 !important; }
+.bubble h1, .bubble h2, .bubble h3 { color: #000000 !important; border-bottom: 1px solid #ccc; }`,
 
             "night": `/* 暗色 */
-            body, #chat-container { background-color: #111111 !important; background-image: none !important; color: #b0b0b0 !important; }
-            #toolbar, #pagination-bar { background-color: #1a1a1a !important; border-color: #333 !important; }
-            .avatar, .char-name { display: none !important; }
-            .bubble { background-color: transparent !important; border: none !important; padding: 0 !important; margin-bottom: 20px !important; font-size: 18px !important; line-height: 2.0 !important; color: #888888 !important; font-family: "Segoe UI", sans-serif; }
-            .message-row, .message-user { flex-direction: row !important; justify-content: flex-start !important; }
-            .bubble-content { max-width: 100% !important; }
-            .bubble strong, .bubble b { color: #d4d4d4 !important; }
-            span[style*="color: #6a8caf"] { color: #7d9ac2 !important; text-shadow: 0 0 1px rgba(125, 154, 194, 0.2); }`
+body, #chat-container { background-color: #111111 !important; background-image: none !important; color: #b0b0b0 !important; }
+#toolbar, #pagination-bar { background-color: #1a1a1a !important; border-color: #333 !important; }
+.avatar, .char-name { display: none !important; }
+.bubble { background-color: transparent !important; border: none !important; padding: 0 !important; margin-bottom: 20px !important; font-size: 18px !important; line-height: 2.0 !important; color: #888888 !important; font-family: "Segoe UI", sans-serif; }
+.message-row, .message-user { flex-direction: row !important; justify-content: flex-start !important; }
+.bubble-content { max-width: 100% !important; }
+.bubble strong, .bubble b { color: #d4d4d4 !important; }
+span[style*="color: #6a8caf"] { color: #7d9ac2 !important; text-shadow: 0 0 1px rgba(125, 154, 194, 0.2); }`
         };
 
-        // 读取用户输入
-        let userDraftCss = localStorage.getItem('st_reader_user_draft') || "";
+        let userCustomThemes = {};
+        const themeNameInput = document.getElementById('theme-name-input');
+        const customThemeGroup = document.getElementById('custom-themes-group');
 
-        // 通用面板
-        function togglePanel(panelId) {
-            const panel = document.getElementById(panelId);
-            if (!panel) return;
+        function loadUserThemes() {
+            const saved = localStorage.getItem('st_reader_user_themes');
+            if (saved) {
+                try {
+                    userCustomThemes = JSON.parse(saved);
+                } catch (e) {
+                    console.error("加载自定义主题失败", e);
+                    userCustomThemes = {};
+                }
+            }
+            renderThemeOptions();
+        }
 
-            const currentDisplay = panel.style.display;
-        
-            document.querySelectorAll('.panel').forEach(p => p.style.display = 'none');
-        
-            if (currentDisplay !== 'flex') {
-                panel.style.display = 'flex';
+        function renderThemeOptions() {
+            customThemeGroup.innerHTML = '';
+            
+            Object.keys(userCustomThemes).forEach(name => {
+                const option = document.createElement('option');
+                option.value = 'user:' + name;
+                option.textContent = '★ ' + name;
+                customThemeGroup.appendChild(option);
+            });
+        }
+
+        function saveCustomTheme() {
+            const name = themeNameInput.value.trim();
+            const cssContent = cssEditor.value;
+
+            if (!name) {
+                alert("请输入样式名称！");
+                return;
+            }
+            if (!cssContent) {
+                alert("CSS 内容不能为空！");
+                return;
+            }
+
+            if (userCustomThemes[name] && !confirm(`样式 "${name}" 已存在，要覆盖吗？`)) {
+                return;
+            }
+
+            userCustomThemes[name] = cssContent;
+            localStorage.setItem('st_reader_user_themes', JSON.stringify(userCustomThemes));
+            
+            alert(`样式 "${name}" 已保存！`);
+            renderThemeOptions();
+            
+            themeSelect.value = 'user:' + name;
+        }
+
+        function deleteCustomTheme() {
+            const selectedValue = themeSelect.value;
+            if (!selectedValue.startsWith('user:')) {
+                alert("只能删除用户自定义的样式（带 ★ 号的）。");
+                return;
+            }
+
+            const name = selectedValue.substring(5)
+            if (confirm(`确定要删除样式 "${name}" 吗？`)) {
+                delete userCustomThemes[name];
+                localStorage.setItem('st_reader_user_themes', JSON.stringify(userCustomThemes));
+                
+                renderThemeOptions();
+                
+                themeSelect.value = 'default';
+                themeNameInput.value = '';
             }
         }
 
         themeSelect.addEventListener('change', function() {
             const selected = this.value;
-        
+
             if (selected === 'default') {
-                cssEditor.value = userDraftCss;
-            } else if (selected === 'clear') {
+
+                const draft = localStorage.getItem('st_reader_user_draft') || "";
+                cssEditor.value = draft;
+                themeNameInput.value = "";
+            } 
+            else if (selected === 'clear') {
+
                 cssEditor.value = "";
-            } else if (PRESET_THEMES[selected]) {
-                cssEditor.value = PRESET_THEMES[selected];
+                themeNameInput.value = "";
             }
+            else if (PRESET_THEMES[selected]) {
+
+                cssEditor.value = PRESET_THEMES[selected];
+                themeNameInput.value = "";
+            } 
+            else if (selected.startsWith('user:')) {
+
+                const name = selected.substring(5);
+                if (userCustomThemes[name]) {
+
+                    cssEditor.value = userCustomThemes[name];
+                    themeNameInput.value = name;
+                }
+            }
+            
             cssEditor.dispatchEvent(new Event('input'));
         });
 
         cssEditor.addEventListener('input', function() {
             const currentCode = this.value;
             
-            localStorage.setItem('st_reader_custom_css', currentCode);
             customStyleTag.textContent = currentCode;
 
+            localStorage.setItem('st_reader_custom_css', currentCode);
+
             if (themeSelect.value === 'default') {
-                userDraftCss = currentCode;
                 localStorage.setItem('st_reader_user_draft', currentCode);
             }
         });
 
+        // ==========================================
+
+        function togglePanel(panelId) {
+            const panel = document.getElementById(panelId);
+            if (!panel) return;
+
+            const currentDisplay = panel.style.display;
+        
+            // 先关闭所有面板
+            document.querySelectorAll('.panel').forEach(p => p.style.display = 'none');
+            
+            // 关闭下拉菜单（如果有打开的话）
+            const dropdown = document.getElementById('dropdown-list');
+            if (dropdown) dropdown.classList.remove('open');
+        
+            // 如果目标面板原来没打开，现在就打开它
+            if (currentDisplay !== 'flex') {
+                panel.style.display = 'flex';
+            }
+        }
+        // ==========================================
+
         window.addEventListener('load', async function() {
-            // 加载 CSS
+
+            loadUserThemes();
+
             const savedCss = localStorage.getItem('st_reader_custom_css');
             if(savedCss) { 
                 cssEditor.value = savedCss; 
                 customStyleTag.textContent = savedCss; 
-                userDraftCss = savedCss;
+
+                if (!localStorage.getItem('st_reader_user_draft')) {
+                    localStorage.setItem('st_reader_user_draft', savedCss);
+                }
             }
             themeSelect.value = "default";
 
-            // 加载正则库
             const savedScripts = localStorage.getItem('st_reader_script_lib');
             if (savedScripts) {
                 try { scriptLibrary = JSON.parse(savedScripts); renderScriptList(); } 
                 catch(e) { console.error(e); }
             }
 
-            // 加载数据库中的聊天记录列表
             await refreshChatList();
         });
 
@@ -983,7 +1097,6 @@
             const dropdown = document.getElementById('dropdown-list');
             const isOpen = dropdown.classList.contains('open');
             
-            // 关闭其他所有可能打开的面板
             document.querySelectorAll('.panel').forEach(p => p.style.display = 'none');
             
             if (isOpen) {
@@ -993,7 +1106,6 @@
             }
         }
 
-        // 点击页面其他地方关闭下拉菜单
         document.addEventListener('click', function(e) {
             const wrapper = document.getElementById('custom-chat-select');
             if (wrapper && !wrapper.contains(e.target)) {
