@@ -910,25 +910,254 @@
         // CSS 主题管理逻辑
 
         const PRESET_THEMES = {
-            "novel": `/* 米色 */
-body, #chat-container { background-color: #f2f1e4 !important; background-image: none !important; color: #2c3e50 !important; }
-.avatar, .char-name { display: none !important; }
-.bubble { background-color: transparent !important; border: none !important; box-shadow: none !important; padding: 0 !important; margin-bottom: 20px !important; font-size: 18px !important; line-height: 2.0 !important; color: #2c3e50 !important; font-family: "Segoe UI", sans-serif; }
-.message-row, .message-user { flex-direction: row !important; justify-content: flex-start !important; }
-.bubble-content { max-width: 100% !important; }
-.bubble strong, .bubble b { color: #000000 !important; font-weight: 900 !important; }
-.bubble h1, .bubble h2, .bubble h3 { color: #000000 !important; border-bottom: 1px solid #ccc; }`,
+    "novel": `/* =========================================
+   电脑端样式 (>= 768px)
+   ========================================= */
+@media screen and (min-width: 768px) {
+    body, #chat-container { background-color: #f2f1e4 !important; background-image: none !important; color: #2c3e50 !important; }
+    .avatar, .char-name { display: none !important; }
+    .bubble { background-color: transparent !important; border: none !important; box-shadow: none !important; padding: 0 !important; margin-bottom: 20px !important; font-size: 18px !important; line-height: 2.0 !important; color: #2c3e50 !important; font-family: "Segoe UI", sans-serif; }
+    .message-row, .message-user { flex-direction: row !important; justify-content: flex-start !important; }
+    .bubble-content { max-width: 100% !important; }
+    .bubble strong, .bubble b { color: #000000 !important; font-weight: 900 !important; }
+    .bubble h1, .bubble h2, .bubble h3 { color: #000000 !important; border-bottom: 1px solid #ccc; }
+}
 
-            "night": `/* 暗色 */
-body, #chat-container { background-color: #111111 !important; background-image: none !important; color: #b0b0b0 !important; }
-#toolbar, #pagination-bar { background-color: #1a1a1a !important; border-color: #333 !important; }
-.avatar, .char-name { display: none !important; }
-.bubble { background-color: transparent !important; border: none !important; padding: 0 !important; margin-bottom: 20px !important; font-size: 18px !important; line-height: 2.0 !important; color: #888888 !important; font-family: "Segoe UI", sans-serif; }
-.message-row, .message-user { flex-direction: row !important; justify-content: flex-start !important; }
-.bubble-content { max-width: 100% !important; }
-.bubble strong, .bubble b { color: #d4d4d4 !important; }
-span[style*="color: #6a8caf"] { color: #7d9ac2 !important; text-shadow: 0 0 1px rgba(125, 154, 194, 0.2); }`
-        };
+/* =========================================
+   手机端样式 (<= 767px)
+   ========================================= */
+@media screen and (max-width: 767px) {
+    body, #chat-container { 
+        background-color: #f2f1e4 !important;
+        background-image: none !important; 
+        color: #2c3e50 !important;
+        padding: 12px 10px !important;
+        max-width: 100% !important;
+        overflow-x: hidden !important;
+    }
+
+    .avatar, .char-name { display: none !important; }
+
+    .bubble { 
+        background-color: transparent !important; 
+        border: none !important;
+        box-shadow: none !important; 
+        padding: 0 !important;
+        margin-bottom: 24px !important; 
+        font-size: 16px !important; 
+        line-height: 1.7 !important; 
+        color: #2c3e50 !important;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Microsoft YaHei", sans-serif; 
+        text-align: justify;
+        word-wrap: break-word;
+    }
+
+    .message-row, .message-user { 
+        flex-direction: row !important;
+        justify-content: flex-start !important; 
+        margin: 0 !important;
+    }
+
+    .bubble-content { 
+        max-width: 100% !important;
+        padding: 0 5px !important;
+    }
+
+    .bubble strong, .bubble b { 
+        color: #000000 !important;
+        font-weight: 900 !important;
+        background-color: transparent !important;
+    }
+
+    .bubble h1, .bubble h2, .bubble h3 { 
+        color: #000000 !important;
+        border-bottom: 1px solid #ccc !important;
+        padding-bottom: 8px !important;
+        margin-top: 20px !important;
+        margin-bottom: 15px !important;
+        font-weight: 600 !important;
+    }
+
+    .bubble h1 { font-size: 20px !important; }
+    .bubble h2 { font-size: 18px !important; }
+    .bubble h3 { font-size: 17px !important; }
+
+    .bubble p {
+        margin-bottom: 12px !important;
+        text-indent: 0 !important;
+    }
+
+    .bubble ul, .bubble ol {
+        padding-left: 20px !important;
+        margin: 12px 0 !important;
+    }
+
+    .bubble blockquote {
+        border-left: 3px solid #999 !important;
+        background-color: rgba(0, 0, 0, 0.05) !important;
+        padding: 12px 15px !important;
+        margin: 15px 0 !important;
+        border-radius: 0 4px 4px 0 !important;
+        font-style: italic !important;
+        color: #555 !important;
+    }
+
+    .bubble code {
+        background-color: #e6e4d5 !important;
+        padding: 2px 5px !important;
+        border-radius: 3px !important;
+        font-family: "SF Mono", Monaco, Consolas, monospace !important;
+        font-size: 14px !important;
+        color: #c7254e !important;
+    }
+
+    .bubble a {
+        color: #2c3e50 !important;
+        text-decoration: underline !important;
+        font-weight: bold !important;
+    }
+
+    @media screen and (max-width: 480px) {
+        body, #chat-container { padding: 10px 8px !important; }
+        .bubble { font-size: 15px !important; line-height: 1.65 !important; margin-bottom: 20px !important; }
+    }
+}`,
+
+    "night": `/* =========================================
+   电脑端样式 (>= 768px)
+   ========================================= */
+@media screen and (min-width: 768px) {
+    body, #chat-container {
+        background-color: #111111 !important;
+        background-image: none !important;
+        color: #b0b0b0 !important;
+    }
+
+    .avatar, .char-name { display: none !important; }
+
+    .bubble {
+        background-color: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        margin-bottom: 20px !important;
+        font-size: 17px !important;
+        line-height: 2.0 !important;
+        color: #888888 !important;
+        font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
+    }
+
+    .message-row, .message-user { flex-direction: row !important; justify-content: flex-start !important; }
+    .bubble-content { max-width: 100% !important; }
+
+    .bubble strong, .bubble b {
+        color: #d4d4d4 !important;
+        font-weight: bold !important;
+    }
+
+    .bubble h1, .bubble h2, .bubble h3 { color: #d4d4d4; }
+}
+
+/* =========================================
+   手机端样式 (<= 767px)
+   ========================================= */
+@media screen and (max-width: 767px) {
+    body, #chat-container { 
+        background-color: #111111 !important;
+        background-image: none !important; 
+        color: #b0b0b0 !important;
+        padding: 12px 10px !important;
+        max-width: 100% !important;
+        overflow-x: hidden !important;
+    }
+
+    .avatar, .char-name { display: none !important; }
+
+    .bubble { 
+        background-color: transparent !important;
+        border: none !important;
+        box-shadow: none !important; 
+        padding: 0 !important;
+        margin-bottom: 24px !important;
+        font-size: 16px !important;
+        line-height: 1.7 !important;
+        color: #888888 !important;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Microsoft YaHei", sans-serif;
+        text-align: justify;
+        word-wrap: break-word;
+    }
+
+    .message-row, .message-user { 
+        flex-direction: row !important;
+        justify-content: flex-start !important; 
+        margin: 0 !important;
+    }
+
+    .bubble-content { 
+        max-width: 100% !important;
+        padding: 0 5px !important;
+    }
+
+    .bubble strong, .bubble b { 
+        color: #d4d4d4 !important;
+        font-weight: 900 !important;
+        background-color: transparent !important;
+    }
+
+    .bubble h1, .bubble h2, .bubble h3 { 
+        color: #d4d4d4 !important;
+        border-bottom: 1px solid #444 !important;
+        padding-bottom: 8px !important;
+        margin-top: 20px !important;
+        margin-bottom: 15px !important;
+        font-weight: 600 !important;
+    }
+
+    .bubble h1 { font-size: 20px !important; }
+    .bubble h2 { font-size: 18px !important; }
+    .bubble h3 { font-size: 17px !important; }
+
+    .bubble p {
+        margin-bottom: 12px !important;
+        text-indent: 0 !important;
+    }
+
+    .bubble ul, .bubble ol {
+        padding-left: 20px !important;
+        margin: 12px 0 !important;
+    }
+
+    .bubble blockquote {
+        border-left: 3px solid #666 !important;
+        background-color: rgba(255, 255, 255, 0.1) !important;
+        padding: 12px 15px !important;
+        margin: 15px 0 !important;
+        border-radius: 0 4px 4px 0 !important;
+        font-style: italic !important;
+        color: #b0b0b0 !important;
+    }
+
+    .bubble code {
+        background-color: #2a2a2a !important;
+        padding: 2px 5px !important;
+        border-radius: 3px !important;
+        font-family: "SF Mono", Monaco, Consolas, monospace !important;
+        font-size: 14px !important;
+        color: #d4d4d4 !important;
+    }
+
+    .bubble a {
+        color: #d4d4d4 !important;
+        text-decoration: underline !important;
+        font-weight: bold !important;
+    }
+
+    @media screen and (max-width: 480px) {
+        body, #chat-container { padding: 10px 8px !important; }
+        .bubble { font-size: 15px !important; line-height: 1.65 !important; margin-bottom: 20px !important; }
+    }
+}`
+};
 
         let userCustomThemes = {};
         const themeNameInput = document.getElementById('theme-name-input');
