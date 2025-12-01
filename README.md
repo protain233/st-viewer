@@ -4,6 +4,7 @@ Reader for SillyTavern Chat Files (SillyTavern 聊天文件的阅读器)
 
 web：https://protain233.github.io/st-viewer/
 
+搭配食用工具（将酒馆导出的美化正则脚本转换成 st-viewer  可用脚本）：https://protain233.github.io/st-viewer_converter/
 
 ### 【2025/11/25】v1.8.3
 
