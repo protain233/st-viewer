@@ -683,7 +683,7 @@
 //---------------------------------------------------------------------//
         // 全局变量
         let allMessages = [];   
-        let isPageMode = false; 
+        let isPageMode = true; //默认翻页模式
         let currentPage = 1;    
         let currentChatId = null;
         
@@ -738,7 +738,7 @@
                         name: displayName, 
                         characterName: charName,
                         messages: messages,
-                        progress: { mode: false, page: 1, scrollTop: 0 },
+                        progress: { mode: true, page: 1, scrollTop: 0 },
                         timestamp: Date.now()
                     };
 
@@ -1606,7 +1606,7 @@
                 const runtimeKey = "st_runtime_" + id;
                 const runtimeData = localStorage.getItem(runtimeKey);
                 
-                let loadMode = false;
+                let loadMode = true;
                 let loadPage = 1;
                 let loadScroll = 0;
 
