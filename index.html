@@ -522,7 +522,7 @@
 
         <button class="btn" id="del-chat-btn" onclick="deleteCurrentChat()" style="background:#5a1a1a; padding:5px 10px; font-size:12px; display:none;">🗑️</button>
 
-        <button class="btn" id="mode-btn" onclick="toggleMode()">😺切换到翻页</button>
+        <button class="btn" id="mode-btn" onclick="toggleMode()">😸切换到翻页</button>
         <button class="btn" onclick="togglePanel('regex-panel')">📃正则脚本</button>
         <button class="btn" onclick="togglePanel('bookmark-panel')">⭐书签</button>
         <button class="btn" onclick="togglePanel('css-panel')">🎨CSS样式</button>
@@ -876,8 +876,6 @@
                     chatContainer.scrollTop = 0;
                 }, 50);
             }
-            
-            toolbar.classList.remove('toolbar-hidden');
             paginationBar.classList.remove('pagination-hidden');
         }
 
