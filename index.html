@@ -1016,6 +1016,8 @@
             text = text.replace(/“([^”]+)”/g, `${COLOR_START}“$1”${COLOR_END}`);
             text = text.replace(/"([^"]+)"/g, `${COLOR_START}"$1"${COLOR_END}`);
 
+            text = text.replace(/%%%HTML_(\d+)%%%/g, (match, index) => htmlTags[index]);
+
             let htmlContent = marked.parse(text);
             
             htmlContent = htmlContent.replace(/%%%HTML_(\d+)%%%/g, (match, index) => htmlTags[index]);
