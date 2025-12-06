@@ -1000,6 +1000,8 @@
 
             text = applyUserRegex(text);
 
+            text = text.replace(/^[ \t]+/gm, '');
+
             text = text.replace(/<thinking>[\s\S]*?<\/thinking>/gi, '');    //隐藏思维链
             
             const htmlTags = [];
@@ -1014,9 +1016,10 @@
             text = text.replace(/“([^”]+)”/g, `${COLOR_START}“$1”${COLOR_END}`);
             text = text.replace(/"([^"]+)"/g, `${COLOR_START}"$1"${COLOR_END}`);
 
-            text = text.replace(/%%%HTML_(\d+)%%%/g, (match, index) => htmlTags[index]);
-
             let htmlContent = marked.parse(text);
+            
+            htmlContent = htmlContent.replace(/%%%HTML_(\d+)%%%/g, (match, index) => htmlTags[index]);
+
             const realStyleStart = '<span class="dialogue-text">';
             const realStyleEnd = '</span>';
             htmlContent = htmlContent.split(COLOR_START).join(realStyleStart);
